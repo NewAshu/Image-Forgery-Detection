@@ -1,8 +1,12 @@
 # Image-Forgery-Detection
 
-Requirements:
-Python3 (3.7.4 Recommended)
-OpenCV (pip install opencv-python)
+ 
+ Requirements:
+ 
+ Python3 (3.7.4 Recommended) 
+ OpenCV (pip install opencv-python)
+ 
+ 
 
 Deviding the whole project in following modules :
 
