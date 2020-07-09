@@ -68,3 +68,115 @@ for i in range(0, row):           # traversing in row
         arr1 = []
 
 print("scanning & dct over!")  
+
+
+print("lexicographic ordering starting...")
+
+dct = dct[np.lexsort(np.rot90(dct))]       # array is rotated by 90 degree in plane specified by the axis
+
+print("lexicographic ordering over!")
+
+
+print("Mathematical i.e eucledian operations starting...")
+
+similar_arr = []
+for i in range(0, block_counter-10):
+   # if i <= block_counter-10:
+        for j in range(i+1, i+10):
+            pixel_sim = np.linalg.norm(dct[i][:16]-dct[j][:16])
+            point_dis = np.linalg.norm(dct[i][-2:]-dct[j][-2:])
+            if pixel_sim <= t_sim and point_dis >= t_distance:      # here we check the threshold values
+                similar_arr.append([dct[i][16], dct[i][17], dct[j][16], dct[j][17],dct[i][16]-dct[j][16], dct[i][17]-dct[j][17]])
+   
+
+print("operations over!")
+
+
+print("elimination starting...")
+
+similar_arr = np.array(similar_arr)          # similarity array
+del_vec = []                                 # declaring delete vector
+vector_counter = 0                           # initiallizing the vector counter value
+for i in range(0, similar_arr.shape[0]):
+    for j in range(1, similar_arr.shape[0]):
+        if similar_arr[i][4] == similar_arr[j][4] and similar_arr[i][5] == similar_arr[j][5]:
+            vector_counter += 1
+    if vector_counter < vector_limit:
+        del_vec.append(similar_arr[i])
+    vector_counter = 0
+
+del_vec = np.array(del_vec)
+del_vec = del_vec[~np.all(del_vec == 0, axis=1)]      # Test whether all array elements along a given axis evaluate to true
+del_vec = del_vec[np.lexsort(np.rot90(del_vec))]      # array is rotated by 90 degree in plane specified by the axis
+
+
+for item in del_vec:
+    index = np.where(similar_arr == item)
+    unique, count = np.unique(index[0], return_counts=True)
+    for i in range(0, unique.shape[0]):
+        if count[i] == 6:
+            similar_arr = np.delete(similar_arr,unique[i],axis=0)
+
+print("elimination over!")
+
+
+print("Localization starting...")
+
+for i in range(1, similar_arr.shape[0]):         # traversing over the similarity array
+    pos1 = int(similar_arr[i][0])                # finding pos1
+    pos2 = int(similar_arr[i][1])                # finding pos2
+    pos3 = int(similar_arr[i][2])                # finding pos3
+    pos4 = int(similar_arr[i][3])                # finding pos4
+    for j in range(0,7):                         # traversing block by block
+        for k in range(0,7):
+            predicted_mask[pos1+j][pos2+k] = 255 # assigining to predicted mask
+            predicted_mask[pos3+j][pos4+k] = 255
+
+print("Localization over!")
+
+
+cv2_imshow(predicted_mask)
+#cv2_imshow("Real Mask", mask_image)
+cv2_imshow(image)
+#cv2_imshow(gray_scale)
+
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+
+mask_image = cv2.imread('forged1_mask.png')
+mask_gray = cv2.cvtColor(mask_image, cv2.COLOR_RGB2GRAY)
+mask_image = np.array(mask_gray)
+print("accuracy calculating...")
+
+TP = 0    # True Positive (number that have been correctly detected as forged )
+FP = 0    # False Positive (number that have been incorrectly detected as forged)
+TN = 0    # True Negative (forged areas that is forged but not included)
+FN = 0    # False Negative (forged areas that are falsely missed) 
+
+for i in range(1, predicted_mask.shape[0]):
+    for j in range(1, predicted_mask.shape[1]):
+        if predicted_mask[i][j] == mask_image[i][j]:        # here we are comparing the real mask image ande our generated mask image 
+            if predicted_mask[i][j] == 255:
+                TP += 1
+            else:
+                TN += 1
+        else:
+            if predicted_mask[i][j] == 255:
+                FP += 1
+            else:
+                FN += 1
+
+#  Precision signiﬁes the probability correct forgery of the detected blocks as forgery
+#  recall determines the probability of forged blocks in the image that are detected
+
+precision = TP/(TP+FP)                      # calculating precision value
+print('Precision is:',precision)     
+recall = TP/(TP+FN)                         # calculating recall value
+print('Recall is:',recall)
+accuracy = 2*precision*recall/(precision+recall)*100    # calculating accuracy percentage
+
+print('Accuracy:', accuracy)
+
+print("accuracy calculated!")
+
